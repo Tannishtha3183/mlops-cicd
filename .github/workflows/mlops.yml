@@ -1,0 +1,57 @@
+
+name: MLOps CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  # Continuous Integration
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Tests
+        run: |
+          pytest
+
+  # Continuous Delivery
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Create Deployment Package
+        run: |
+          mkdir deployment
+          cp model.py deployment/
+          cp requirements.txt deployment/
+          cp -r tests deployment/
+
+      - name: Create ZIP Artifact
+        run: |
+          zip -r ml-model-package.zip deployment
+
+      - name: Upload Deployment Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ml-model-package
+          path: ml-model-package.zip
